@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import re
+import sys
 
 base = 'https://letterboxd.com'
 
@@ -10,8 +11,8 @@ def data_strip(data):
     # Month up to Rating
     for i in range(0, 5):
         res.append(data[i].text.strip())
-    
-    if len(data) > 7 and 'Read the review' in data[7].text:
+
+    if 'Read the review' in data[7].text:
         link = data[7].find('a', href=True)
         if link:
             res.append(get_review(link['href']))
@@ -32,7 +33,11 @@ def get_review(link):
     return content.text
 
 def main():
-    url = base + '/JalanKotak/films/diary/'
+    if (len(sys.argv) != 2):
+        print('python3 lb.py <username>')
+        return
+    
+    url = base + f'/{sys.argv[1]}/films/diary/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, features="html.parser")
     diary_table = soup.find('table', class_='table film-table')
@@ -41,6 +46,9 @@ def main():
     diary_table_titles = diary_table.find_all('th')
     plain_titles = [title.text for title in diary_table_titles]
     # ['Month', 'Day', 'Film', 'Released', 'Rating', 'Like', 'Rewatch', 'Review', 'EditYou']
+    plain_titles.remove('Like')
+    plain_titles.remove('Rewatch')
+    plain_titles.remove('EditYou')
     print(plain_titles)
 
     col_data = diary_table.find_all('tr')
